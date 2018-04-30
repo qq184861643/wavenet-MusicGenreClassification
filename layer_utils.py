@@ -28,8 +28,7 @@ class ResidualBlock(nn.Module):
 		self.skip_conv = nn.Conv1d(in_channels = dilation_channels,out_channels = skip_channels,kernel_size=1,bias=bias)
 		self.skip_norm = nn.BatchNorm1d(skip_channels)        
 		self.res_conv = nn.Conv1d(in_channels = dilation_channels,out_channels = res_channels,kernel_size=1,bias=bias)
-		self.res_norm = nn.BatchNorm1d(res_channels)
-		self.drop = nn.Dropout(p=0.3)        
+		self.res_norm = nn.BatchNorm1d(res_channels)       
 		self.kernel_size = kernel_size
 	def forward(self,inputs,dilation,init_dilation):
 		inputs = dilate(inputs,dilation,init_dilation)
@@ -43,12 +42,45 @@ class ResidualBlock(nn.Module):
 		skip = hidden
 		if hidden.size(2)!=1:
 			skip = dilate(hidden,1,init_dilation=dilation)
-		skip = self.drop(skip)
 		skip_out = self.skip_conv(skip)
-		skip_out = self.skip_norm(skip_out)
-		hidden = self.drop(hidden)        
+		skip_out = self.skip_norm(skip_out)        
 		res_out = self.res_conv(hidden)
 		res_out = self.res_norm(res_out)
 		outputs = res_out+inputs[:,:,(self.kernel_size-1):]
 		return outputs,skip_out
 
+class SELayer2d(nn.Module):
+    def __init__(self, channel, reduction=16):
+        super(SELayer2d, self).__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d((1,1))
+        bottleneck = int(channel / reduction)
+        self.conv = nn.Sequential(
+                nn.Conv2d(channel, bottleneck,1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(bottleneck, channel,1),
+                nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        b, c, _, _ = x.size()
+        y = self.avg_pool(x)
+        y = self.conv(y).view(b, c, 1, 1)
+        return x * y
+
+class SELayer1d(nn.Module):
+    def __init__(self, channel, reduction=16):
+        super(SELayer1d, self).__init__()
+        self.avg_pool = nn.AdaptiveAvgPool1d((1))
+        bottleneck = int(channel / reduction)
+        self.conv = nn.Sequential(
+                nn.Conv1d(channel, bottleneck,1),
+                nn.ReLU(inplace=True),
+                nn.Conv1d(bottleneck, channel,1),
+                nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        b, c, _ = x.size()
+        y = self.avg_pool(x).contiguous()
+        y = self.conv(y).contiguous().view(b, c, 1)
+        return x * y

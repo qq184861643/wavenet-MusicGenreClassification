@@ -74,8 +74,8 @@ class ModelTrainer:
         			x = Variable(x.type(self.dtype))
         			target = Variable(target.view(-1,50).type(self.dtype))
         			output = self.model(x).view(-1,50)
-        			#loss = F.binary_cross_entropy(output,target)
-        			loss = self.model.loss(output,target,alpha=1.1)            
+        			loss = F.binary_cross_entropy(output,target)
+        			#loss = self.model.loss(output,target,alpha=1.1)            
         			self.optimizer.zero_grad()
         			loss.backward()
         			loss = loss.data[0]
@@ -114,8 +114,8 @@ class ModelTrainer:
         		target = Variable(target.view(-1,50).type(self.dtype))
 
         		output = self.model(x)
-        		#loss = F.binary_cross_entropy(output,target)
-        		loss = self.model.loss(output,target,alpha=1.1)
+        		loss = F.binary_cross_entropy(output,target)
+        		#loss = self.model.loss(output,target,alpha=1.1)
         		total_loss += loss.data[0]
 
         	avg_loss = total_loss / len(self.validloader)

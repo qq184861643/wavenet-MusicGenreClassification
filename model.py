@@ -4,6 +4,7 @@ from torch.autograd import Variable
 from CNN import parallel_CNN
 from wavenet import WaveNet
 import torch.nn.functional as F 
+from layer_utils import SELayer1d
 
 class ParallelModel(nn.Module):
 	def __init__(self):
@@ -11,9 +12,10 @@ class ParallelModel(nn.Module):
 		
 		self.cnn = parallel_CNN(out_channels = 128)
 		self.wavenet = CascadeModel(L_trans_channels=512)
-		self.drop = nn.Dropout(p=0.5)
-		self.fc1 = nn.Linear(256,1024)
-		self.fc2 = nn.Linear(1024,50)        
+		self.drop = nn.Dropout(p=0.3)
+		self.fc1 = nn.Linear(256,512)
+		self.fc2 = nn.Linear(512,256) 
+		self.fc3 = nn.Linear(256,50)        
 
 	def forward(self,inputs):
 		out1 = self.cnn(inputs).contiguous().view(-1,128)
@@ -21,12 +23,14 @@ class ParallelModel(nn.Module):
 		out2 = self.wavenet.dilate_conv(inputs).contiguous().view(-1,128)
 		#print out2.size()
 		hidden = torch.cat((out1,out2),dim=1)
-		hidden = F.elu(self.fc1(hidden))
+		hidden = F.relu(self.fc1(hidden))#relu is to be tested
 		hidden = self.drop(hidden)
-		outputs = F.sigmoid(self.fc2(hidden))     
+		hidden = F.relu(self.fc2(hidden))
+		hidden = self.drop(hidden)        
+		outputs = F.sigmoid(self.fc3(hidden))        
 		return outputs
 
-	def loss(self,outputs,target,alpha = 1.1):
+	def loss(self,outputs,target,alpha = 1.2):
 		#check = F.binary_cross_entropy(outputs,target)
 		x = outputs
 		y = target
@@ -46,24 +50,28 @@ class CascadeModel(nn.Module):
                                          nn.Conv1d(L_trans_channels,L_trans_channels,3),
                                          nn.Conv1d(L_trans_channels,L_trans_channels,3),
                                          nn.BatchNorm1d(L_trans_channels),
+                                         #SELayer1d(L_trans_channels),
                                          nn.ELU(),
-                                         nn.Dropout(p=0.3),
                                          nn.MaxPool1d(2),
                                          nn.Conv1d(L_trans_channels,L_trans_channels,3),
                                          nn.Conv1d(L_trans_channels,L_trans_channels,3),
                                          nn.BatchNorm1d(L_trans_channels),
+                                         #SELayer1d(L_trans_channels),
                                          nn.ELU(),
-                                         nn.Dropout(p=0.3),
                                          nn.MaxPool1d(2),
                                          nn.Conv1d(L_trans_channels,L_trans_channels,3),
                                          nn.Conv1d(L_trans_channels,L_trans_channels,3,padding=1),
                                          nn.BatchNorm1d(L_trans_channels),
+                                         #SELayer1d(L_trans_channels),
                                          nn.ELU(),
-                                         nn.Dropout(p=0.3),
                                          nn.MaxPool1d(2),
                                          nn.Conv1d(L_trans_channels,L_trans_channels,1),
+                                         # to be test
+                                         nn.BatchNorm1d(L_trans_channels),
+                                         #SELayer1d(L_trans_channels),
                                          nn.ELU(),
-                                         nn.Conv1d(L_trans_channels,input_L,1))
+                                         nn.Conv1d(L_trans_channels,input_L,1)                                    
+                                         )
         
         self.wavenet = WaveNet(in_depth = 9,
                                dilation_channels=32,
@@ -72,13 +80,14 @@ class CascadeModel(nn.Module):
                                end_channels = 128,
                                dilation_depth = 6,
                                n_blocks = 5)
-
-        self.post = nn.Sequential(nn.Linear(64,256),
-                                  nn.ELU(),
+        #maxpool(4) is better than avgpool(4), avgpool(7) is to be test
+        #self.pool = nn.AvgPool1d(7)
+        self.post = nn.Sequential(nn.Dropout(p=0.2),
+                                  nn.Linear(128,256),
+                                  nn.ReLU(),
                                   nn.Dropout(p=0.3),
                                   nn.Linear(256,50),
-                                  nn.Sigmoid(),
-                                  #nn.Dropout(p=0.3)
+                                  nn.Sigmoid(), 
                                   )
 
     def dilate_conv(self,inputs):
@@ -89,7 +98,6 @@ class CascadeModel(nn.Module):
         hidden = hidden.contiguous().transpose(1,2)
         assert hidden.size(2) == self.input_L
         outputs = self.wavenet(hidden)[:,:,-1]
-
         return outputs
 
     def forward(self,inputs):
