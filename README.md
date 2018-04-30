@@ -53,7 +53,8 @@ def loss(self,outputs,target,alpha = 1.1):
 I find the test AUC score raise rapidly to 87.91 at around 13 epoch but reach 88.54 after training is done. So the weight term accelerates the convergence but does not help with final performance.
 
 **6**. I tried to increase the conv kernels of the parallel CNN but the model overfitted.<br>
-**7**. I tried to change the gate function from sigmoid to elu inside wavenet's residual block but led to a worse result.
+**7**. I tried to change the gate function from sigmoid to elu inside wavenet's residual block but led to a worse result.<br>
+**8**. I removed all the Dropout layers entangled with BatchNorm layers to avoid [Variance Shift](https://arxiv.org/abs/1801.05134). With some minor structure tunings the model reach 88.71 test auc score and it needs only 10 epochs(about 0.49 seconds a step, 6000 seconds in total) to converge. With SEnet struture the auc score decrease to 88.6 while converging a little faster.
 
 ### Conclusion of my work
-The model reaches a relativly good result(88.57 compared to baseline 89.4) while massively reduces the training time(about 14000 seconds compared to about 20 hours), proving that the causal 1-d dilated convolution network has quite potential in sequential data classification, which could to be exploited in future works(i.e. Adding attention in wavenet structure).
+The model reaches a relativly good result(88.71 compared to baseline 89.4) while massively reduces the training time(about 6000 seconds compared to about 20 hours), proving that the causal 1-d dilated convolution network has quite potential in sequential data classification, which could to be exploited in future works(i.e. Adding attention in wavenet structure).
