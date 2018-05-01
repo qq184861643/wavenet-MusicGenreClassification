@@ -51,7 +51,11 @@ class ModelTrainer:
 		self.snapshot_thresh = snapshot_thresh
 		self.dtype = dtype
 		self.ltype = ltype
-
+        	self.validloader = torch.utils.data.DataLoader(self.validset,
+        											 batch_size = 16,
+        											 shuffle = False,
+        											 num_workers = 8,
+        											 pin_memory=False)
         def train(self,
         			batch_size = 16,
         			epochs = 20,
@@ -100,11 +104,7 @@ class ModelTrainer:
 
         def validate(self):
         	self.model.eval()
-        	self.validloader = torch.utils.data.DataLoader(self.validset,
-        											 batch_size = 16,
-        											 shuffle = False,
-        											 num_workers = 8,
-        											 pin_memory=False)
+
         	self.validloader.train = False
 
         	total_loss = 0
