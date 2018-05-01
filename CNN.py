@@ -41,3 +41,36 @@ class parallel_CNN(nn.Module):
 		x = self.maxpool(x).contiguous().view(-1,self.out_channels)    
 		return x
 
+class GroupConv2d(nn.Module):
+    def __init__(self,in_channels,out_channels,cardinality,stride=1,downsample=False):
+        super(GroupConv2d,self).__init__()
+
+        self.downsample = downsample
+        C = in_channels/2
+
+        self.conv_pre = nn.Conv2d(in_channels,C,1)
+        self.bn_pre = nn.BatchNorm2d(C)
+        self.conv = nn.Conv2d(C,C,kernel_size=3,padding=1,stride=stride,groups=cardinality)
+        self.bn = nn.BatchNorm2d(C)
+        self.conv_expand = nn.Conv2d(C,out_channels,1)
+        self.bn_expand=nn.BatchNorm2d(out_channels)
+        self.conv_down = nn.Conv2d(in_channels,out_channels,1)
+
+    def forward(self,x):
+        residual = x
+
+        h = self.conv_pre(x)
+        h = F.relu(self.bn_pre(h),inplace=True)
+
+        h = self.conv(h)
+        h = F.relu(self.bn(h),inplace=True)
+
+        h = self.conv_expand(h)
+        h = self.bn_expand(h)
+
+        if self.downsample:
+            residual = self.conv_down(x)
+
+        #if SEnet, should insert it here before h+residual
+
+        return h+residual
