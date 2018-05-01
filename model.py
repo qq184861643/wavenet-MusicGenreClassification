@@ -48,27 +48,25 @@ class CascadeModel(nn.Module):
         self.input_L = input_L
         self.first_block = nn.Sequential(nn.Conv1d(input_L,L_trans_channels,1),
                                          nn.Conv1d(L_trans_channels,L_trans_channels,3),
+					 nn.ReLU(),
                                          nn.Conv1d(L_trans_channels,L_trans_channels,3),
                                          nn.BatchNorm1d(L_trans_channels),
-                                         #SELayer1d(L_trans_channels),
                                          nn.ELU(),
                                          nn.MaxPool1d(2),
                                          nn.Conv1d(L_trans_channels,L_trans_channels,3),
+					 nn.ReLU(),
                                          nn.Conv1d(L_trans_channels,L_trans_channels,3),
                                          nn.BatchNorm1d(L_trans_channels),
-                                         #SELayer1d(L_trans_channels),
                                          nn.ELU(),
                                          nn.MaxPool1d(2),
                                          nn.Conv1d(L_trans_channels,L_trans_channels,3),
+					 nn.ReLU(),
                                          nn.Conv1d(L_trans_channels,L_trans_channels,3,padding=1),
                                          nn.BatchNorm1d(L_trans_channels),
-                                         #SELayer1d(L_trans_channels),
                                          nn.ELU(),
                                          nn.MaxPool1d(2),
                                          nn.Conv1d(L_trans_channels,L_trans_channels,1),
-                                         # to be test
                                          nn.BatchNorm1d(L_trans_channels),
-                                         #SELayer1d(L_trans_channels),
                                          nn.ELU(),
                                          nn.Conv1d(L_trans_channels,input_L,1)                                    
                                          )
@@ -80,8 +78,7 @@ class CascadeModel(nn.Module):
                                end_channels = 128,
                                dilation_depth = 6,
                                n_blocks = 5)
-        #maxpool(4) is better than avgpool(4), avgpool(7) is to be test
-        #self.pool = nn.AvgPool1d(7)
+
         self.post = nn.Sequential(nn.Dropout(p=0.2),
                                   nn.Linear(128,256),
                                   nn.ReLU(),
