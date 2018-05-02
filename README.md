@@ -14,7 +14,7 @@ A cascade wavenet works in parallel with a CNN. The wavenet with M dilation dept
 Details are in the code.
 
 ### What have I done
-BATCH_SIZE=16, EPOCH=23.<br>
+**BATCH_SIZE=16, EPOCH=23.**<br>
 
 **1**.Using only cascade wavenet with 6 dilation depth 5 residual blocks can reach around 84.66 AUC score and only 7000 seconds training time. Indicate that wavenet is capable of modeling the music spectrogram and much faster than RNN structure.
 
@@ -52,7 +52,7 @@ I find the test AUC score raise rapidly to 87.91 at around 13 epoch but reach 88
 
 **7**. I tried to change the gate function from sigmoid to elu inside wavenet's residual block but led to a worse result.<br>
 
-
+**BATCH_SIZE=16, EPOCH=10-12.**<br>
 **8**. I removed all the Dropout layers entangled with BatchNorm layers to avoid [Variance Shift](https://arxiv.org/abs/1801.05134). With some minor structure tunings the model reach 88.71 test auc score and it needs only 10 epochs(about 0.49 seconds a step, 6000 seconds in total) to converge. With SEnet struture the auc score decrease to 88.6 while converging a little faster.<br>
 
 
