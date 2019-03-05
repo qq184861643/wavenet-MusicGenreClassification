@@ -60,5 +60,7 @@ I find the test AUC score raise rapidly to 87.91 at around 13 epoch but reach 88
 
 **10**. Some minor changes including adding a few batch norm layers and changing some elu function to relu. The model is more stable which converged at 12 epoch but only costed 4900 seconds and the best test auc score reached 88.96.
 
+**11** update SENet Module by adding a maxpooling layer before avgpooling to reserve more fine-grained feature. Raiseing auc score to 90.4
+
 ### Conclusion of my work
-The model reaches a relativly good result(88.96 compared to baseline 89.4) while massively reduces the training time(about 4900 seconds compared to about 20 hours), proving that the causal 1-d dilated convolution network has quite potential in sequential data classification, which could to be exploited in future works(i.e. Adding attention in wavenet structure).
+The model reaches a relativly good result(90.4 compared to baseline 89.4) while massively reduces the training time(about 4900 seconds compared to about 20 hours), proving that the causal 1-d dilated convolution network has quite potential in sequential data classification, which could to be exploited in future works(i.e. Adding attention in wavenet structure).
